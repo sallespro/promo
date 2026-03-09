@@ -31,30 +31,29 @@ export default function Contact() {
   }
 
   return (
-    <section id="contact" className="py-24 md:py-32 px-4 md:px-8 bg-gray-50">
+    <section id="contact" className="py-32 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
-
-        <div className="text-center mb-12 space-y-4">
-          <Badge>Get In Touch</Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Let's Build Your AI Future
+        <div className="text-center mb-16 space-y-4">
+          <Badge className="bg-primary/20 text-primary border-primary/30">Get In Touch</Badge>
+          <h2 className="text-5xl md:text-6xl font-bold text-foreground">
+            Let's Build Your <span className="gradient-gold-cyan">AI Future</span>
           </h2>
-          <p className="text-muted">
-            Tell us about your business and we'll reach out within 24 hours with a tailored proposal.
+          <p className="text-lg text-muted">
+            Tell us about your challenges and we'll provide a tailored strategy within 24 hours.
           </p>
         </div>
 
         {status === 'success' ? (
-          <div className="glass-card rounded-xl p-12 text-center space-y-4">
+          <div className="card-premium rounded-xl p-12 text-center space-y-4">
             <CheckCircle className="w-16 h-16 text-primary mx-auto" />
             <h3 className="text-2xl font-bold text-foreground">Message Received!</h3>
-            <p className="text-muted">Our team will reach out within 24 hours. Exciting things ahead.</p>
-            <Button variant="outline" onClick={() => setStatus('idle')}>Send Another</Button>
+            <p className="text-muted">Our team will reach out within 24 hours with a tailored proposal.</p>
+            <Button variant="outline" onClick={() => setStatus('idle')} className="border-primary/30 hover:bg-primary/10">Send Another</Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="glass-card rounded-xl p-8 space-y-4">
+          <form onSubmit={handleSubmit} className="card-premium rounded-xl p-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-sm text-muted font-medium">Full Name</label>
                 <Input
                   name="name"
@@ -62,9 +61,10 @@ export default function Contact() {
                   onChange={handleChange}
                   placeholder="Jane Smith"
                   required
+                  className="bg-background/40 border-border/50 text-foreground placeholder:text-muted/50"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <label className="text-sm text-muted font-medium">Email Address</label>
                 <Input
                   name="email"
@@ -73,10 +73,11 @@ export default function Contact() {
                   onChange={handleChange}
                   placeholder="jane@company.com"
                   required
+                  className="bg-background/40 border-border/50 text-foreground placeholder:text-muted/50"
                 />
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-sm text-muted font-medium">Tell us about your project</label>
               <Textarea
                 name="message"
@@ -85,18 +86,19 @@ export default function Contact() {
                 placeholder="We're a fintech with 10K customers and want to automate our support with AI..."
                 rows={5}
                 required
+                className="bg-background/40 border-border/50 text-foreground placeholder:text-muted/50"
               />
             </div>
 
             {status === 'error' && (
-              <p className="text-red-500 text-sm">Something went wrong. Please try again or email us directly.</p>
+              <p className="text-red-400 text-sm">Something went wrong. Please try again or email us directly.</p>
             )}
 
             <Button
               type="submit"
               variant="accent"
               size="lg"
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={status === 'loading'}
             >
               {status === 'loading' ? 'Sending...' : (
