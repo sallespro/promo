@@ -1,287 +1,87 @@
 #!/usr/bin/env node
 
-/**
- * create — Infoproduct Site Generator CLI
- *
- * Usage:
- *   ./create "<prompt>" [--url <url>] [--out <dir>] [--lang en|pt-BR] [--accent blue|green|amber|pink|teal]
- *
- * Reads criteria.md from same directory, calls Claude API,
- * writes a complete Vite + React + Shadcn + Express site.
- */
-
 import fs from 'fs'
 import path from 'path'
-import { execSync, exec } from 'child_process'
+import { execSync } from 'child_process'
 import { fileURLToPath } from 'url'
-import { promisify } from 'util'
-import Anthropic from '@anthropic-ai/sdk'
+import { fetchContent, generateSite, parseFiles, writeFiles } from './lib/generate.js'
 
-const execAsync = promisify(exec)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-// ─── Parse CLI args ──────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
   const args = argv.slice(2)
   const opts = { prompt: '', url: '', out: '', lang: '', accent: '', model: 'claude-sonnet-4-6' }
   let i = 0
   while (i < args.length) {
-    if (args[i] === '--url')    { opts.url    = args[++i] }
-    else if (args[i] === '--out')    { opts.out    = args[++i] }
-    else if (args[i] === '--lang')   { opts.lang   = args[++i] }
-    else if (args[i] === '--accent') { opts.accent = args[++i] }
-    else if (args[i] === '--model')  { opts.model  = args[++i] }
-    else if (!args[i].startsWith('--')) { opts.prompt = args[i] }
+    if      (args[i] === '--url')    opts.url    = args[++i]
+    else if (args[i] === '--out')    opts.out    = args[++i]
+    else if (args[i] === '--lang')   opts.lang   = args[++i]
+    else if (args[i] === '--accent') opts.accent = args[++i]
+    else if (args[i] === '--model')  opts.model  = args[++i]
+    else if (!args[i].startsWith('--')) opts.prompt = args[i]
     i++
   }
   return opts
 }
 
-// ─── Fetch URL content ───────────────────────────────────────────────────────
-
-async function fetchContent(url) {
-  if (!url) return ''
-  console.log(`\n📡 Fetching content from: ${url}`)
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' }
-    })
-    const html = await res.text()
-    // Strip tags, collapse whitespace
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 6000) // cap at 6k chars for context
-    return text
-  } catch (e) {
-    console.warn(`⚠️  Could not fetch URL: ${e.message}`)
-    return ''
-  }
-}
-
-// ─── Read criteria ───────────────────────────────────────────────────────────
-
 function readCriteria() {
-  const criteriaPath = path.join(__dirname, 'criteria.md')
-  if (!fs.existsSync(criteriaPath)) {
-    console.error('❌ criteria.md not found next to the create CLI.')
-    process.exit(1)
-  }
-  return fs.readFileSync(criteriaPath, 'utf8')
+  const p = path.join(__dirname, 'criteria.md')
+  if (!fs.existsSync(p)) { console.error('❌ criteria.md not found next to the create CLI.'); process.exit(1) }
+  return fs.readFileSync(p, 'utf8')
 }
-
-// ─── Call Claude API ─────────────────────────────────────────────────────────
-
-async function generateSite(opts, criteria, urlContent) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('\n❌ ANTHROPIC_API_KEY environment variable is not set.')
-    console.error('   Export it: export ANTHROPIC_API_KEY=sk-ant-...')
-    process.exit(1)
-  }
-  const client = new Anthropic()
-
-  const systemPrompt = `You are an expert fullstack developer specializing in high-converting infoproduct landing pages.
-
-CRITERIA (follow these rules exactly):
-${criteria}
-
-IMPORTANT OUTPUT FORMAT:
-Return ONLY a valid JSON array. No markdown. No explanation. No code fences.
-Each element: {"path": "relative/path/to/file", "content": "full file content as string"}
-
-The JSON must be parseable with JSON.parse().
-Include EVERY file needed to run the app: package.json, vite.config.js, tailwind.config.js,
-postcss.config.js, index.html, server/index.js, all src/ files, public/favicon.svg.
-Make all content complete and working — no placeholders, no TODOs.`
-
-  const userPrompt = `Build a complete infoproduct landing page site with this information:
-
-SOURCE URL: ${opts.url || 'none'}
-
-FETCHED CONTENT FROM URL:
-${urlContent || 'No URL content — use the prompt info below exclusively.'}
-
-PROMPT / ADDITIONAL CONTEXT:
-${opts.prompt}
-
-REQUIREMENTS:
-- Language: ${opts.lang || 'auto-detect from content (prefer Portuguese if content is Brazilian)'}
-- Accent color scheme: ${opts.accent || 'auto-detect from brand (blue/indigo for AI/tech)'}
-- Output directory base name: ${opts.out || 'auto-generate from site name'}
-- Dark theme by default with animated matrix background on hero
-- Space Grotesk font (Google Fonts)
-- All sections from criteria: Navbar, Hero, Features, HowItWorks, About, Testimonials, FAQ, CTA, Footer
-- Express backend on port 3001 with /api/contact and /api/health
-- Fully working, zero TODOs, complete code in every file
-
-CONTENT GUIDELINES:
-- Extract the brand name, services, value propositions from the fetched content above
-- Generate compelling, professional copy based on the actual business
-- Create 6 feature cards representing the core services
-- Create 4 testimonials (synthesized, professional)
-- Create 5 FAQ entries relevant to the business
-- Create a 3-step "How It Works" process
-
-Return ONLY the JSON array now:`
-
-  console.log('\n🤖 Calling Claude API to generate site...')
-  console.log(`   Model: ${opts.model}`)
-
-  let fullText = ''
-
-  const stream = await client.messages.stream({
-    model: opts.model,
-    max_tokens: 16000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }]
-  })
-
-  process.stdout.write('   Generating')
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      fullText += chunk.delta.text
-      process.stdout.write('.')
-    }
-  }
-  console.log(' done!\n')
-
-  return fullText
-}
-
-// ─── Parse & write files ─────────────────────────────────────────────────────
-
-function parseFiles(raw) {
-  // Strip markdown code fences if Claude added them
-  let text = raw.trim()
-  if (text.startsWith('```')) {
-    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-  }
-
-  try {
-    return JSON.parse(text)
-  } catch (e) {
-    // Try to find JSON array in the text
-    const match = text.match(/\[[\s\S]*\]/)
-    if (match) {
-      try {
-        return JSON.parse(match[0])
-      } catch {}
-    }
-    throw new Error(`Failed to parse Claude response as JSON: ${e.message}\n\nFirst 500 chars:\n${text.slice(0, 500)}`)
-  }
-}
-
-function writeFiles(files, outDir) {
-  console.log(`📁 Writing ${files.length} files to: ${outDir}/`)
-
-  for (const file of files) {
-    const fullPath = path.join(outDir, file.path)
-    const dir = path.dirname(fullPath)
-
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-
-    fs.writeFileSync(fullPath, file.content, 'utf8')
-    console.log(`   ✓ ${file.path}`)
-  }
-}
-
-// ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
   const opts = parseArgs(process.argv)
-
   if (!opts.prompt && !opts.url) {
     console.log(`
 Usage: ./create "<prompt>" [--url <url>] [--out <dir>] [--lang en|pt-BR] [--accent blue|green|amber|pink|teal]
 
 Examples:
-  ./create "AI consulting firm for Brazilian enterprises" --url https://ai.cloudpilot.com.br
-  ./create "Health coaching platform for women" --accent green --lang pt-BR
+  ./create "AI consulting firm" --url https://ai.cloudpilot.com.br
+  ./create "Health coaching for women" --accent green --lang pt-BR
   ./create "SaaS project management tool" --out myproject --lang en
 `)
     process.exit(1)
   }
 
-  console.log('\n🚀 Infoproduct Site Generator')
-  console.log('================================')
-
-  // 1. Read criteria
+  console.log('\n🚀 Infoproduct Site Generator\n================================')
   const criteria = readCriteria()
   console.log('✓ Loaded criteria.md')
 
-  // 2. Fetch URL content
   const urlContent = await fetchContent(opts.url)
-
-  // 3. Generate site via Claude
   const raw = await generateSite(opts, criteria, urlContent)
 
-  // 4. Parse files
   let files
   try {
     files = parseFiles(raw)
   } catch (e) {
     console.error('❌ ' + e.message)
-    // Save raw output for debugging
     fs.writeFileSync('create-debug.txt', raw)
     console.log('💾 Raw output saved to create-debug.txt')
     process.exit(1)
   }
 
-  // 5. Determine output directory
   let outDir = opts.out
   if (!outDir) {
-    // Try to find a package.json in files to get the name
     const pkg = files.find(f => f.path === 'package.json')
-    if (pkg) {
-      try {
-        const pkgData = JSON.parse(pkg.content)
-        outDir = pkgData.name || 'generated-site'
-      } catch {
-        outDir = 'generated-site'
-      }
-    } else {
-      outDir = 'generated-site'
-    }
+    if (pkg) { try { outDir = JSON.parse(pkg.content).name || 'generated-site' } catch { outDir = 'generated-site' } }
+    else outDir = 'generated-site'
   }
 
   const outPath = path.join(process.cwd(), outDir)
+  if (fs.existsSync(outPath)) console.log(`\n⚠️  Directory "${outDir}" already exists. Files will be overwritten.`)
+  else fs.mkdirSync(outPath, { recursive: true })
 
-  if (fs.existsSync(outPath)) {
-    console.log(`\n⚠️  Directory "${outDir}" already exists. Files will be overwritten.`)
-  } else {
-    fs.mkdirSync(outPath, { recursive: true })
-  }
+  writeFiles(files, outPath, { mkdirSync: fs.mkdirSync, writeFileSync: fs.writeFileSync, existsSync: fs.existsSync, join: path.join, dirname: path.dirname })
 
-  // 6. Write files
-  writeFiles(files, outPath)
-
-  // 7. Install dependencies
   console.log('\n📦 Installing dependencies...')
-  try {
-    execSync('npm install', { cwd: outPath, stdio: 'inherit' })
-    console.log('✓ Dependencies installed')
-  } catch (e) {
-    console.warn('⚠️  npm install failed — you may need to run it manually')
-  }
+  try { execSync('npm install', { cwd: outPath, stdio: 'inherit' }); console.log('✓ Dependencies installed') }
+  catch { console.warn('⚠️  npm install failed — run manually') }
 
-  // 8. Done!
-  console.log('\n✅ Site generated successfully!')
-  console.log('================================')
-  console.log(`\nTo start the dev server:`)
-  console.log(`  cd ${outDir}`)
-  console.log(`  npm run dev`)
-  console.log(`\nFrontend: http://localhost:5173`)
-  console.log(`Backend:  http://localhost:3001`)
-  console.log('')
+  console.log('\n✅ Site generated!\n================================')
+  console.log(`\n  cd ${outDir} && npm run dev`)
+  console.log('\n  Frontend: http://localhost:5173')
+  console.log('  Backend:  http://localhost:3001\n')
 }
 
-main().catch(e => {
-  console.error('\n❌ Fatal error:', e.message)
-  process.exit(1)
-})
+main().catch(e => { console.error('\n❌ Fatal error:', e.message); process.exit(1) })

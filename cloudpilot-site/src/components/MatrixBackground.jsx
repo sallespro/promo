@@ -8,10 +8,7 @@ export default function MatrixBackground() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
 
-    const resize = () => {
-      canvas.width  = window.innerWidth
-      canvas.height = window.innerHeight
-    }
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize()
     window.addEventListener('resize', resize)
 
@@ -23,39 +20,20 @@ export default function MatrixBackground() {
     const draw = () => {
       ctx.fillStyle = 'rgba(15, 23, 42, 0.05)'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
-
       ctx.font = `${fontSize}px monospace`
-
       for (let i = 0; i < drops.length; i++) {
         const char = chars[Math.floor(Math.random() * chars.length)]
-
-        // Blue-to-indigo gradient for AI aesthetic
         const alpha = Math.random() * 0.6 + 0.2
-        ctx.fillStyle = Math.random() > 0.5
-          ? `rgba(99, 102, 241, ${alpha})`
-          : `rgba(59, 130, 246, ${alpha})`
-
+        ctx.fillStyle = Math.random() > 0.5 ? `rgba(99, 102, 241, ${alpha})` : `rgba(59, 130, 246, ${alpha})`
         ctx.fillText(char, i * fontSize, drops[i] * fontSize)
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0
-        }
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0
         drops[i]++
       }
     }
 
     const interval = setInterval(draw, 50)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('resize', resize)
-    }
+    return () => { clearInterval(interval); window.removeEventListener('resize', resize) }
   }, [])
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 -z-10 opacity-20 pointer-events-none"
-      aria-hidden="true"
-    />
-  )
+  return <canvas ref={canvasRef} className="fixed inset-0 -z-10 opacity-20 pointer-events-none" aria-hidden="true" />
 }

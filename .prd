@@ -1,0 +1,19 @@
+## VIOLATIONS TO FIX
+
+### Wave 1 (parallel)
+- [A] create: oversize 288→<200 (split into create + lib/generate.js) + remove 19 comment lines
+- [B] server/index.js: remove 7 comment lines
+- [C] MatrixBackground.jsx: remove 1 comment line
+
+### Wave 2 (parallel, depends on none)
+- [D] SectionHeader.jsx: extract duplicated section-header pattern from Features, HowItWorks, Testimonials, FAQ
+- [E] src/data/content.js: extract all inline data arrays (features, steps, testimonials, faq, bullets, stats, links, socials)
+
+### Wave 3 (depends on D, E)
+- [F] Update Features, HowItWorks, Testimonials, FAQ, About, Footer, Hero, Navbar to consume SectionHeader + content.js
+
+### Wave 4 (depends on all)
+- [G] .gitignore: add .code-search/ (already present, verify)
+- [H] vite.config.js: port via env var VITE_PORT
+- [I] POST-EMIT-VALIDATION: npm run build in cloudpilot-site
+- [J] GIT-PUSH: git add -A && commit && push
