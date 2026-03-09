@@ -7,10 +7,10 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-8">
           <div className="space-y-2">
             <div className="flex items-center gap-2 font-bold text-xl">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <brand.icon className="w-4 h-4 text-white" />
               </div>
-              <span className="gradient-text">{brand.name}</span>
+              <span className="text-foreground">{brand.name}</span>
             </div>
             <p className="text-muted text-sm max-w-xs">{brand.tagline}</p>
           </div>

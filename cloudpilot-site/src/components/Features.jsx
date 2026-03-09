@@ -4,7 +4,7 @@ import { features } from '@/data/content'
 
 export default function Features() {
   return (
-    <section id="services" className="py-24 md:py-32 px-4 md:px-8">
+    <section id="services" className="py-24 md:py-32 px-4 md:px-8 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           badge="Our Services"
@@ -14,9 +14,9 @@ export default function Features() {
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f, i) => (
-            <Card key={i} className="group hover:scale-[1.02] hover:-translate-y-1 cursor-default">
+            <Card key={i} className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4 group-hover:from-primary/30 group-hover:to-accent/30 transition-all duration-300">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <f.icon className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>{f.title}</CardTitle>

@@ -6,7 +6,7 @@ export default function SectionHeader({ badge, headline, highlight, sub }) {
       <Badge>{badge}</Badge>
       <h2 className="text-4xl md:text-5xl font-bold text-foreground">
         {headline}{' '}
-        {highlight && <span className="gradient-text">{highlight}</span>}
+        {highlight && <span className="text-primary">{highlight}</span>}
       </h2>
       {sub && <p className="text-muted text-lg max-w-2xl mx-auto">{sub}</p>}
     </div>

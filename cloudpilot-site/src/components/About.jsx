@@ -3,13 +3,13 @@ import { aboutBullets, aboutStats } from '@/data/content'
 
 export default function About() {
   return (
-    <section id="about" className="py-24 md:py-32 px-4 md:px-8">
+    <section id="about" className="py-24 md:py-32 px-4 md:px-8 bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-6">
             <Badge>Who We Are</Badge>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
-              The AI Partner That <span className="gradient-text">Gets It Done</span>
+              The AI Partner That Gets It Done
             </h2>
             <p className="text-muted text-lg leading-relaxed">
               Cloudpilot is a premier AI consulting firm dedicated to helping businesses navigate the complex landscape of artificial intelligence. We believe AI should create <strong className="text-foreground">measurable, lasting value</strong> — not just impressive demos.
@@ -27,9 +27,8 @@ export default function About() {
             </ul>
           </div>
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl blur-2xl" />
-            <div className="relative glass-card rounded-3xl p-8 space-y-6 animate-float">
-              <div className="text-6xl font-black gradient-text">10x</div>
+            <div className="glass-card rounded-2xl p-8 space-y-6">
+              <div className="text-5xl font-bold text-primary">10x</div>
               <div className="text-foreground font-semibold text-lg">Average ROI achieved by our clients in year 1</div>
               <div className="section-divider" />
               <div className="grid grid-cols-2 gap-4">
