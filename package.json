@@ -1,0 +1,12 @@
+{
+  "name": "infoproduct-create-cli",
+  "version": "1.0.0",
+  "description": "CLI to generate infoproduct sites from a prompt using Claude AI",
+  "type": "module",
+  "bin": {
+    "create": "./create"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
